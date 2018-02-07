@@ -1,0 +1,14 @@
+[Unit]
+Description=Populate postgresql with users and databases needed for keycloak and sentry
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=postgres
+#EnvironmentFile=-/etc/sysconfig/cloudtrust_postgresql_init
+ExecStart=/cloudtrust/postgresql-tools/bin/python /cloudtrust/postgresql-tools/scripts/populate.py --path /etc/sysconfig/cloudtrust_postgresql_init
+ExecStart=+/bin/systemctl disable postgresql_init 
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
