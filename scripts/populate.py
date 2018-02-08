@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 author = "Sonia Bogos"
@@ -87,13 +87,14 @@ try:
         logger.info("changed user {} with {}".format(user['role_specification'], user['option']))
 
     con.commit()
-except psycopg2.DatabaseError, e:
+except Exception as e:
     logger.debug(e)
     if con:
         con.rollback()
-    print 'Error %s' % e
+    print('Error %s' % e)
     sys.exit(1)
 finally:
     if con:
         con.close()
         logger.info("closed connection to postgresql")
+
