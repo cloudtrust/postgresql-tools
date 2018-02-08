@@ -58,7 +58,7 @@ con = None
 
 try:
     logger.info("connecting to postgres with user {}".format(config['credentials']['user']))
-    con = psycopg2.connect(host='localhost', user=config['credentials']['user'], password=config['credentials']['password'])
+    con = psycopg2.connect(host='127.0.0.1', user=config['credentials']['user'], password=config['credentials']['password'])
     con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = con.cursor()
 
