@@ -9,7 +9,8 @@ User=postgres
 ExecStart=/cloudtrust/postgresql-tools/bin/python3.6 /cloudtrust/postgresql-tools/postgresql_script_run.py \
           --config-file /etc/sysconfig/cloudtrust_postgresql_init \
           --ip 127.0.0.1 \
-          --scripts scripts/keycloak.sql scripts/keycloak_rollback.sql scripts/sentry.sql scripts/sentry_rollback.sql	 
+	  --scripts /cloudtrust/postgresql-tools/scripts/keycloak.sql /cloudtrust/postgresql-tools/scripts/keycloak_rollback.sql \
+	 /cloudtrust/postgresql-tools/scripts/sentry.sql /cloudtrust/postgresql-tools/scripts/sentry_rollback.sql	 
 ExecStart=+/bin/systemctl disable postgresql_init 
 RemainAfterExit=true
 
