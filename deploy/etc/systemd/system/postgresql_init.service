@@ -6,7 +6,10 @@ After=postgresql.service
 Type=oneshot
 User=postgres
 #EnvironmentFile=-/etc/sysconfig/cloudtrust_postgresql_init
-ExecStart=/cloudtrust/postgresql-tools/bin/python /cloudtrust/postgresql-tools/scripts/populate.py --path /etc/sysconfig/cloudtrust_postgresql_init
+ExecStart=/cloudtrust/postgresql-tools/bin/python3.6 /cloudtrust/postgresql-tools/postgresql_script_run.py \
+          --config-file /etc/sysconfig/cloudtrust_postgresql_init \
+          --ip 127.0.0.1 \
+          --scripts scripts/keycloak.sql scripts/keycloak_rollback.sql scripts/sentry.sql scripts/sentry_rollback.sql	 
 ExecStart=+/bin/systemctl disable postgresql_init 
 RemainAfterExit=true
 
