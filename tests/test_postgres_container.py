@@ -43,7 +43,7 @@ class TestContainerPostgresql():
         command_postgresql = (
         "busctl", "get-property", "org.freedesktop.systemd1", "/org/freedesktop/systemd1/unit/postgresql_2eservice",
         "org.freedesktop.systemd1.Unit", "ActiveState")
-        active_status = 'active'
+        active_status = '"active"'
 
         # docker exec -it busctl get-property
         check_service = docker.bake("exec", "-i", container_name, command_postgresql)
