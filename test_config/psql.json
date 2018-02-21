@@ -1,0 +1,6 @@
+{
+  "_comment" : "Please replace the credentials with appropriate values",
+  "user": "dummy_user",
+  "password": "dummy_password",
+  "host_ip": "127.0.0.1"
+}

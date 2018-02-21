@@ -78,11 +78,11 @@ class TestcriptPSQLScriptRun():
 
         script_name = "postgresql_script_run.py"
         create_user = python3.bake(script_name, "--scripts", "test_create_user.sql", "test_drop_user.sql", "--ip", "127.0.0.1",
-                                   "--config-file", "psql.json")
+                                   "--config-file", "./test_config/psql.json")
         create_user()
 
         drop_user = python3.bake(script_name, "--scripts", "test_drop_user.sql", "test_create_user.sql", "--ip", "127.0.0.1",
-                                   "--config-file", "psql.json")
+                                   "--config-file", "./test_config/psql.json")
         drop_user()
 
 

@@ -18,7 +18,8 @@ logging.basicConfig(
 logger = logging.getLogger("postgres_tools.tests.test_postgres_container")
 logger.setLevel(logging.DEBUG)
 
-@pytest.mark.usefixtures('settings', scope='class')
+
+@pytest.mark.usefixtures('psql_settings', 'settings', scope='class')
 class TestContainerPostgresql():
     """
         Class to test the posgresql container.
@@ -131,7 +132,7 @@ class TestContainerPostgresql():
         status = re.search(running_status, check_status().stdout.decode("utf-8"))
         assert status is not None
 
-    def test_postgresl(self, settings):
+    def test_postgresl(self, settings, psql_settings):
         """
         Test to check if postgresql is functional.
         :param settings: settings of the container, e.g. container name, service name, etc.
@@ -141,9 +142,9 @@ class TestContainerPostgresql():
         # test if one can do modifications on postgres db
         con = None
         try:
-            logger.info("connecting to postgres with user {0}".format(settings['user']))
-            con = psycopg2.connect(host=settings['host_ip'], user=settings['user'],
-                                   password=settings['password'])
+            logger.info("connecting to postgres with user {0}".format(psql_settings['user']))
+            con = psycopg2.connect(host=psql_settings['host_ip'], user=psql_settings['user'],
+                                   password=psql_settings['password'])
             # con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cur = con.cursor()
 
@@ -341,7 +342,7 @@ class TestContainerPostgresql():
         for port in ports:
             assert re.search(port, exposed_ports) is not None
 
-    def test_data_consistency(self, settings):
+    def test_data_consistency(self, settings, psql_settings):
         """
         Test to check that the modifications done in Postgresql are present after the container was stopped.
         :param settings: settings of the container, e.g. container name, service name, etc.
@@ -353,9 +354,9 @@ class TestContainerPostgresql():
 
         con = None
         try:
-            logger.info("connecting to postgres with user {}".format(settings['user']))
-            con = psycopg2.connect(host=settings['host_ip'], user=settings['user'],
-                                   password=settings['password'])
+            logger.info("connecting to postgres with user {}".format(psql_settings['user']))
+            con = psycopg2.connect(host=psql_settings['host_ip'], user=psql_settings['user'],
+                                   password=psql_settings['password'])
             cur = con.cursor()
 
             # create an user
@@ -401,9 +402,9 @@ class TestContainerPostgresql():
 
         con = None
         try:
-            logger.info("connecting again to postgres with user {}".format(settings['user']))
-            con = psycopg2.connect(host=settings['host_ip'], user=settings['user'],
-                                   password=settings['password'])
+            logger.info("connecting again to postgres with user {}".format(psql_settings['user']))
+            con = psycopg2.connect(host=psql_settings['host_ip'], user=psql_settings['user'],
+                                   password=psql_settings['password'])
             cur = con.cursor()
 
             # check if the user created exists

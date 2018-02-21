@@ -17,17 +17,17 @@ logging.basicConfig(
 logger = logging.getLogger("postgres_tools.postgresql_lib.test_script")
 logger.setLevel(logging.DEBUG)
 
-
+@pytest.mark.usefixtures('psql_settings', scope='class')
 class TestScript():
     """Class to test the python script.py."""
 
-    def test_script_working(self, settings):
+    def test_script_working(self, psql_settings):
         """Test to check that the script does the changes we expect him to do."""
 
         script_create_user = "CREATE USER test_script;"
         user = "test_script"
         script_drop_user = "DROP USER test_script;"
-        config = settings
+        config = psql_settings
 
 
         con = None
@@ -72,13 +72,13 @@ class TestScript():
             con.close()
             logger.info("closed connection to postgresql")
 
-    def test_rollback(self, settings):
+    def test_rollback(self, psql_settings):
         """Test to check that the rollback works: if an error occurs, we undo all the modifications."""
 
         script_create_user = "CREATE USER test_script;\n CREATE invalid_syntax;"
         user = "test_script"
         script_drop_user = "DROP USER test_script;"
-        config = settings
+        config = psql_settings
 
         con = None
         try:

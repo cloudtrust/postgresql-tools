@@ -1,9 +1,6 @@
 {
   "container_name" : "postgresql-new",
   "service_name" : "postgresql",
-  "host_ip": "127.0.0.1",
-  "user": "postgres",
-  "password": "Passw0rd",
   "psql_timeout": 75,
   "monit_timeout": 10,
   "ports": ["5432"],
