@@ -34,40 +34,40 @@ class TestScript():
 
         con = None
         try:
-            logger.info("connecting to postgres with user {}".format(config['user']))
+            logger.info("connecting to postgres with user {user}".format(user=config['user']))
             con = psycopg2.connect(host=config['ip'], user=config['user'],
                                    password=config['password'])
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
-            print("Error %s" % e)
+            print("Error {error}".format(error=e))
             sys.exit(1)
 
         script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user)
 
         try:
             cur = con.cursor()
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(user))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
             assert cur.rowcount == 1
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
-            pytest.fail("Error %s" % e)
+            pytest.fail("Error {error}".format(error=e))
             sys.exit(1)
 
         script.PostgresqlScriptExecutor().run(con, script_drop_user, script_create_user)
 
 
         try:
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(user))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
             assert cur.rowcount == 0
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
-            pytest.fail("Error %s" % e)
+            pytest.fail("Error {error}".format(error=e))
             sys.exit(1)
 
         if con:
@@ -84,14 +84,14 @@ class TestScript():
 
         con = None
         try:
-            logger.info("connecting to postgres with user {}".format(config['user']))
+            logger.info("connecting to postgres with user {user}".format(user=config['user']))
             con = psycopg2.connect(host=config['ip'], user=config['user'],
                                    password=config['password'])
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
-            print("Error %s" % e)
+            print("Error {error}".format(error=e))
             sys.exit(1)
 
 
@@ -99,13 +99,13 @@ class TestScript():
 
         try:
             cur = con.cursor()
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(user))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
             assert cur.rowcount == 0
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
-            pytest.fail("Error %s" % e)
+            pytest.fail("Error {error}".format(error=e))
             sys.exit(1)
 
         if con:

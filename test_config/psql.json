@@ -1,6 +1,6 @@
 {
   "_comment" : "Please replace the credentials with appropriate values",
-  "user": "postgres",
-  "password": "Passw0rd",
+  "user": "test",
+  "password": "test",
   "host_ip": "127.0.0.1"
 }

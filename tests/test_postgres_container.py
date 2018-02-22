@@ -149,7 +149,7 @@ class TestContainerPostgresql():
         # test if one can do modifications on postgres db
         con = None
         try:
-            logger.info("connecting to postgres with user {0}".format(psql_settings['user']))
+            logger.info("connecting to postgres with user {user}".format(user=psql_settings['user']))
             con = psycopg2.connect(host=psql_settings['host_ip'], user=psql_settings['user'],
                                    password=psql_settings['password'])
             # con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
@@ -157,15 +157,15 @@ class TestContainerPostgresql():
 
             # check if we can create a user
             username = "test_postgresql"
-            cur.execute("CREATE USER {0};".format(username))
-            logger.debug("CREATE USER {0}".format(username))
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(username))
+            cur.execute("CREATE USER {user};".format(user=username))
+            logger.debug("CREATE USER {user}".format(user=username))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
             assert cur.rowcount == 1
 
             # check if we can remove the user we just created
-            cur.execute("DROP USER {0};".format(username))
-            logger.debug("DROP USER {0};".format(username))
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(username))
+            cur.execute("DROP USER {user};".format(user=username))
+            logger.debug("DROP USER {user};".format(user=username))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
             assert cur.rowcount == 0
 
             con.commit()
@@ -173,7 +173,7 @@ class TestContainerPostgresql():
             logger.debug(e)
             if con:
                 con.rollback()
-            pytest.fail("Error %s" % e)
+            pytest.fail("Error {error}".format(error=e))
             sys.exit(1)
         finally:
             if con:
@@ -203,14 +203,14 @@ class TestContainerPostgresql():
             # check if monit started postgresql
             time.sleep(1)
             check_service = docker.bake("exec", "-i", container_name, "systemctl", "status", service_name)
-            logger.info("Check to see if {0} started after {1} seconds".format(service_name, tic_tac))
+            logger.info("Check to see if {service} started after {time} seconds".format(service=service_name, time=tic_tac))
             logger.debug(check_service)
 
             try:
                 postgresql_status = check_service().exit_code
                 if (postgresql_status == 0):
                     psql_is_up = True
-                    logger.info("{0} is running".format(service_name))
+                    logger.info("{service} is running".format(service=service_name))
 
             except Exception as e:
                 tic_tac = tic_tac + 1
@@ -239,14 +239,14 @@ class TestContainerPostgresql():
             # check if monit started postgresql
             time.sleep(1)
             check_service = docker.bake("exec", "-i", container_name, "systemctl", "status", service_name)
-            logger.info("Check to see if {0} started after {1} seconds".format(service_name, tic_tac))
+            logger.info("Check to see if {service} started after {time} seconds".format(service=service_name, time=tic_tac))
             logger.debug(check_service)
 
             try:
                 postgresql_status = check_service().exit_code
                 if (postgresql_status == 0):
                     psql_is_up = True
-                    logger.info("{0} is running".format(service_name))
+                    logger.info("{service} is running".format(service=service_name))
 
             except Exception as e:
                 tic_tac = tic_tac + 1
@@ -319,14 +319,14 @@ class TestContainerPostgresql():
             # check if systemd starts monit
             time.sleep(1)
             check_service = docker.bake("exec", "-i", container_name, "systemctl", "status", service_name)
-            logger.info("Check to see if {0} started after {1} seconds".format(service_name, tic_tac))
+            logger.info("Check to see if {service} started after {time} seconds".format(service=service_name, time=tic_tac))
             logger.debug(check_service)
 
             try:
                 monit_status = check_service().exit_code
                 if (monit_status == 0):
                     monit_is_up = True
-                    logger.info("{0} is running".format(service_name))
+                    logger.info("{service} is running".format(service=service_name))
 
             except Exception as e:
                 tic_tac = tic_tac + 1
@@ -361,21 +361,21 @@ class TestContainerPostgresql():
 
         con = None
         try:
-            logger.info("connecting to postgres with user {}".format(psql_settings['user']))
+            logger.info("connecting to postgres with user {user}".format(user=psql_settings['user']))
             con = psycopg2.connect(host=psql_settings['host_ip'], user=psql_settings['user'],
                                    password=psql_settings['password'])
             cur = con.cursor()
 
             # create an user
             username = "test_postgresql"
-            cur.execute("CREATE USER {0};".format(username))
-            logger.debug("CREATE USER {0}".format(username))
+            cur.execute("CREATE USER {user};".format(user=username))
+            logger.debug("CREATE USER {user}".format(user=username))
             con.commit()
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
-            pytest.fail("Error %s" % e)
+            pytest.fail("Error {error}".format(error=e))
             sys.exit(1)
         finally:
             if con:
@@ -402,28 +402,28 @@ class TestContainerPostgresql():
                 postgresql_status = check_service().exit_code
                 if (postgresql_status == 0):
                     psql_is_up = True
-                    logger.info("{0} is running".format(service_name))
+                    logger.info("{service} is running".format(service=service_name))
             except Exception as e:
-                logger.info("{0} is not yet running".format(service_name))
+                logger.info("{service} is not yet running".format(service=service_name))
 
 
         con = None
         try:
-            logger.info("connecting again to postgres with user {}".format(psql_settings['user']))
+            logger.info("connecting again to postgres with user {user}".format(user=psql_settings['user']))
             con = psycopg2.connect(host=psql_settings['host_ip'], user=psql_settings['user'],
                                    password=psql_settings['password'])
             cur = con.cursor()
 
             # check if the user created exists
 
-            logger.debug("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(username))
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(username))
+            logger.debug("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
             assert cur.rowcount == 1
 
             # remove the created user
-            cur.execute("DROP USER {0};".format(username))
-            logger.debug("DROP USER {0};".format(username))
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{0}'".format(username))
+            cur.execute("DROP USER {user};".format(user=username))
+            logger.debug("DROP USER {user};".format(user=username))
+            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
             assert cur.rowcount == 0
 
             con.commit()
@@ -431,7 +431,7 @@ class TestContainerPostgresql():
             logger.debug(e)
             if con:
                 con.rollback()
-            pytest.fail("Error %s" % e)
+            pytest.fail("Error {error}".format(error=e))
             sys.exit(1)
         finally:
             if con:

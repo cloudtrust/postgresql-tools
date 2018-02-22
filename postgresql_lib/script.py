@@ -41,7 +41,7 @@ class PostgresqlScriptExecutor(object):
                     counter = 1
                     for command in list_commands:
                         if command and not command.isspace():
-                            res +=  "{0} : {1} \n".format(counter, command)
+                            res += "{0} : {1} \n".format(counter, command)
                             cur.execute(command)
                             logger.info(command)
                             res += "{0} : {1} \n".format(counter, cur.statusmessage)
@@ -51,7 +51,7 @@ class PostgresqlScriptExecutor(object):
             logger.debug(e)
             if con:
                 # execute the rollback script
-                res += "Something went wrong: {0}; doing the rollback \n".format(e)
+                res += "Something went wrong: {error}; doing the rollback \n".format(error=e)
                 with con.cursor() as cur:
                     list_commands = rollback_script.split(";\n")
                     counter = 1
