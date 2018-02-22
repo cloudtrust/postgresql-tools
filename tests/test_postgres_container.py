@@ -1,13 +1,20 @@
 #!/usr/bin/env python
-from sh import docker
+
+# Copyright (C) 2018:
+#     Sonia Bogos, sonia.bogos@elca.ch
+#
+
 import re
 import pytest
 import logging
 import psycopg2
 import time
-from datetime import datetime
-import dateutil.parser
+import datetime
 import calendar
+
+import dateutil.parser
+
+from sh import docker
 
 # logging
 logging.basicConfig(
@@ -282,7 +289,7 @@ class TestContainerPostgresql():
             end = line.index("]", start)
             monit_date = line[start : end].split(" ")
             monit_time = monit_date[3].split(":")
-            logged_date = datetime(datetime.now().year, list(calendar.month_abbr).index(monit_date[1]), int(monit_date[2]),
+            logged_date = datetime.datetime(datetime.datetime.now().year, list(calendar.month_abbr).index(monit_date[1]), int(monit_date[2]),
                            int(monit_time[0]), int(monit_time[1]), int(monit_time[0]))
             if logged_date > last_started_date:
                 monit_priority = line[end+1 : line.index(":", end)]

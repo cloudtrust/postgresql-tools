@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-author = "Sonia Bogos"
-maintainer = "Sonia Bogos"
-version = "0.0.1"
+# Copyright (C) 2018:
+#     Sonia Bogos, sonia.bogos@elca.ch
+#
+
+
 
 import psycopg2
-from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import sys
 import logging
+
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # logging
 logging.basicConfig(

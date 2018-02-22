@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-author = "Sonia Bogos"
-maintainer = "Sonia Bogos"
-version = "0.0.1"
+# Copyright (C) 2018:
+#     Sonia Bogos, sonia.bogos@elca.ch
+#
 
-from postgresql_lib import script
 import sys
 import json
 import logging
 import argparse
-from z3c.schema import ip
 import psycopg2
+
 import z3c.schema
+
+from postgresql_lib import script
+from z3c.schema import ip
 
 # logging
 logging.basicConfig(
@@ -24,10 +26,17 @@ logger = logging.getLogger("postgres_tools.postgresql_script_run")
 logger.setLevel(logging.DEBUG)
 
 prog_name = sys.argv[0]
-parser = argparse.ArgumentParser(prog="{pn} {v}".format(pn=prog_name, v=version),
-                                 description="module calls script-py to execute queries in postgresql")
+parser = argparse.ArgumentParser(prog="{pn} {v}".format(pn=prog_name, v=version))
 usage = """{pn} [options]
-    """.format(
+
+Execute scripts and dedicated rollback scripts on postgresql
+
+    SQL scripts are stored within /scripts
+    Scripts can possess an equivalent rollback script based on the file name
+    script.sql          : script to execute
+    script.sql.rollback : the rollback script for script.sql
+
+""".format(
     pn=prog_name
 )
 

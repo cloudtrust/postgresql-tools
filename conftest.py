@@ -1,3 +1,8 @@
+#!/usr/bin/env python
+# Copyright (C) 2018:
+#     Sonia Bogos, sonia.bogos@elca.ch
+#
+
 import pytest
 import json
 

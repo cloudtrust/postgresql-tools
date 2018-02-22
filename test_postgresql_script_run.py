@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+# Copyright (C) 2018:
+#     Sonia Bogos, sonia.bogos@elca.ch
+#
 
-from sh import python3
 import pytest
 import logging
-import z3c.schema
-from z3c.schema import ip
 import sh
+
+from sh import python3
 
 # logging
 logging.basicConfig(

@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
-from sh import python3
+# Copyright (C) 2018:
+#     Sonia Bogos, sonia.bogos@elca.ch
+#
+
 import script
 import pytest
 import logging
 import psycopg2
 import sys
-
 
 # logging
 logging.basicConfig(
