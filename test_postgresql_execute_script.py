@@ -19,8 +19,8 @@ logger = logging.getLogger("postgres_tools.test_postgresql_script_run")
 logger.setLevel(logging.INFO)
 
 
-class TestcriptPSQLScriptRun():
-    """Class to test the python script postgresql_script_run."""
+class TestPSQLExecuteScript():
+    """Class to test the python script postgresql_execute_script."""
 
     def test_missing_arguments(self):
         """Test to check that missing arguments raise an exception."""
