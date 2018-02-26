@@ -23,7 +23,7 @@ logging.basicConfig(
     datefmt='%m/%d/%Y %I:%M:%S %p'
 )
 logger = logging.getLogger("postgres_tools.tests.test_postgres_container")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 @pytest.mark.usefixtures('psql_settings', 'settings', scope='class')

@@ -17,7 +17,7 @@ logging.basicConfig(
     datefmt='%m/%d/%Y %I:%M:%S %p'
 )
 logger = logging.getLogger("postgres_tools.postgresql_lib.test_script")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 @pytest.mark.usefixtures('psql_settings', scope='class')
 class TestScript():

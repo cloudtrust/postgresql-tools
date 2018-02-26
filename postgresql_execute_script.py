@@ -41,10 +41,16 @@ Execute scripts and dedicated rollback scripts on postgresql
 )
 
 parser.add_argument(
-    '--sql-scripts',
-    dest="scripts",
+    '--sql-script',
+    dest="script",
     help='Paths of the sql script: Ex : ../keycloack.sql',
-    nargs='+',
+    required=True
+)
+
+parser.add_argument(
+    '--sql-script-rollback',
+    dest="script_rollback",
+    help='Paths of the rollback sql script: Ex : ../keycloack_rollback.sql',
     required=True
 )
 
@@ -124,7 +130,7 @@ if __name__ == "__main__":
     if debug:
         logger.setLevel(logging.DEBUG)
     else:
-        logger.setLevel(logging.CRITICAL)
+        logger.setLevel(logging.INFO)
 
     # assign and validate
     ##
@@ -176,12 +182,37 @@ if __name__ == "__main__":
         else:
             raise Exception("Incomplete credentials given as arguments")
 
+    # PostgresqlScriptExecutor instance
+    ##
+    psql_exec = script.PostgresqlScriptExecutor()
+
     # Sql scripts
     ##
-    sql_files = args.scripts
+    sql_file = args.script
+    sql_file_rollback = args.script_rollback
+
+    logger.info("loading sql file from {file}".format(file=sql_file))
+    logger.info("loading rollback sql file from {file}".format(file=sql_file_rollback))
+
+    try:
+        with open(sql_file, "r") as f:
+            commands = f.read()
+        f.close()
+
+    except Exception as e:
+        logger.debug(e)
+        raise Exception("Sql file {path} cannot be read".format(path=sql_file))
+
+    try:
+        with open(sql_file_rollback, "r") as f:
+            rollback_commands = f.read()
+        f.close()
+
+    except Exception as e:
+        logger.debug(e)
+        raise Exception("Rollback sql file {path} cannot be read".format(path=sql_file_rollback))
 
     con = None
-
     try:
         logger.info("connecting to postgres with user {user}".format(user=db_user))
         con = psycopg2.connect(host=db_server_ip, user=db_user, password=db_password)
@@ -189,42 +220,29 @@ if __name__ == "__main__":
         logger.debug(e)
         if con:
             con.rollback()
+            con.close()
         sys.exit(1)
 
-    if len(sql_files) % 2 != 0:
-        raise Exception("We should have pairs of scripts: script + rollback_script")
+    try:
+        res = psql_exec.run(con, commands, rollback_commands)
+        logger.debug(
+            json.dumps(
+                res,
+                sort_keys=True,
+                indent=4,
+                separators=(',', ': ')
+            )
+        )
 
-    for i in range(0, len(sql_files), 2):
-        sql_file = sql_files[i]
-        rollback_sql_file = sql_files[i+1]
-
-        logger.info("loading sql file from {file}".format(file=sql_file))
-        logger.info("loading rollback sql file from {file}".format(file=rollback_sql_file))
-
-        try:
-            with open(sql_file, "r") as f:
-                commands = f.read()
-            f.close()
-
-        except Exception as e:
-            logger.debug(e)
-            raise Exception("Sql file {path} cannot be read".format(path=sql_file))
-
-        try:
-            with open(rollback_sql_file, "r") as f:
-                rollback_commands = f.read()
-            f.close()
-
-        except Exception as e:
-            logger.debug(e)
-            raise Exception("Rollback sql file {path} cannot be read".format(path=rollback_sql_file))
-
-        res = script.PostgresqlScriptExecutor().run(con, commands, rollback_commands)
-        logger.debug(res)
-
-    # close the postgresql connection
-    if con:
-        con.close()
-        logger.info("closed connection to postgresql")
+    except Exception as e:
+        logger.debug(e)
+        if con:
+            con.rollback()
+        sys.exit(1)
+    finally:
+        # close the postgresql connection
+        if con:
+            con.close()
+            logger.info("closed connection to postgresql")
 
 

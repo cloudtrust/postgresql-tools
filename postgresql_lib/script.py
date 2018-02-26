@@ -10,6 +10,7 @@
 import psycopg2
 import sys
 import logging
+import collections
 
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
@@ -20,7 +21,7 @@ logging.basicConfig(
     datefmt='%m/%d/%Y %I:%M:%S %p'
 )
 logger = logging.getLogger("postgres_tools.postgresql_lib.script")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 class PostgresqlScriptExecutor(object):
     @staticmethod
@@ -29,39 +30,41 @@ class PostgresqlScriptExecutor(object):
 
         :param con: connection to postgresql
         :param script: list of queries to execute
+        :param rollback_script: list of queries to execute for rollback
         :return: transcript of the executed queries
         """
-        res = ""
+        res = collections.OrderedDict()
+        counter = 0
         con.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         try:
             with con:
                 with con.cursor() as cur:
                     # execute the sql script query by query
                     list_commands = script.split(";\n")
-                    counter = 1
                     for command in list_commands:
                         if command and not command.isspace():
-                            res += "{0} : {1} \n".format(counter, command)
+                            counter += 1
+                            res[counter] = {}
+                            res[counter]["command"] = "{0}".format(command)
                             cur.execute(command)
                             logger.info(command)
-                            res += "{0} : {1} \n".format(counter, cur.statusmessage)
-                            counter += 1
+                            res[counter]["status"] = "{0}".format(cur.statusmessage)
             con.commit()
         except Exception as e:
-            logger.debug(e)
+            logger.info(e)
             if con:
                 # execute the rollback script
-                res += "Something went wrong: {error}; doing the rollback \n".format(error=e)
                 with con.cursor() as cur:
                     list_commands = rollback_script.split(";\n")
-                    counter = 1
                     for command in list_commands:
                         if command and not command.isspace():
-                            res += "{0} : {1} \n".format(counter, command)
+                            counter += 1
+                            res[counter] = {}
+                            res[counter]["command"] = "{0}".format(command)
                             cur.execute(command)
                             logger.info(command)
-                            res += "{0} : {1} \n".format(counter, cur.statusmessage)
-                            counter += 1
+                            res[counter]["status"] = "{0}".format(cur.statusmessage)
+
         finally:
             return res
 
