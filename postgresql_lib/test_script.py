@@ -35,7 +35,7 @@ class TestScript():
         con = None
         try:
             logger.info("connecting to postgres with user {user}".format(user=config['user']))
-            con = psycopg2.connect(host=config['ip'], user=config['user'],
+            con = psycopg2.connect(host=config['host_ip'], user=config['user'],
                                    password=config['password'])
         except Exception as e:
             logger.debug(e)
@@ -85,7 +85,7 @@ class TestScript():
         con = None
         try:
             logger.info("connecting to postgres with user {user}".format(user=config['user']))
-            con = psycopg2.connect(host=config['ip'], user=config['user'],
+            con = psycopg2.connect(host=config['host_ip'], user=config['user'],
                                    password=config['password'])
         except Exception as e:
             logger.debug(e)

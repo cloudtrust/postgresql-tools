@@ -105,7 +105,6 @@ def validate_json(json_file, json_schema):
         raise jsonschema.SchemaError
 
 
-
 if __name__ == "__main__":
     """
 
