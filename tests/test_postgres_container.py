@@ -287,7 +287,7 @@ class TestContainerPostgresql():
         for line in lines:
             start = line.index("[") + len("[")
             end = line.index("]", start)
-            monit_date = line[start : end].split(" ")
+            monit_date = line[start : end].split()
             monit_time = monit_date[3].split(":")
             logged_date = datetime.datetime(datetime.datetime.now().year, list(calendar.month_abbr).index(monit_date[1]), int(monit_date[2]),
                            int(monit_time[0]), int(monit_time[1]), int(monit_time[0]))
