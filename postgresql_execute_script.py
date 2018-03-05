@@ -58,7 +58,7 @@ parser.add_argument(
     dest="db_user",
     help='Username to connect to the database: Ex : "postgres"',
     type=str,
-    required=False
+    required=True 
 )
 parser.add_argument(
     '--debug',
