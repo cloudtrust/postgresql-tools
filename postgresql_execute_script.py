@@ -53,13 +53,44 @@ parser.add_argument(
     help='Paths of the rollback sql script: Ex : ../keycloack_rollback.sql',
     required=True
 )
+
+parser.add_argument(
+    '--database-config-file',
+    dest="path",
+    help='Path of the database config: Ex : ../postgresql.json',
+    type=str,
+    required=False,
+    default=""
+)
+
+parser.add_argument(
+    '--database-server-ip',
+    dest="db_server_ip",
+    help='IP of the database config: Ex : "127.0.0.1"',
+    type=str,
+    required=False,
+    default=""
+)
+
+
 parser.add_argument(
     '--database-user',
     dest="db_user",
     help='Username to connect to the database: Ex : "postgres"',
     type=str,
-    required=True 
+    required=False,
+    default=""
 )
+
+parser.add_argument(
+    '--database-password',
+    dest="db_password",
+    help='Password of the user that connects to the database: Ex : "1234"',
+    type=str,
+    required=False,
+    default=""
+)
+
 parser.add_argument(
     '--debug',
     dest="debug",
@@ -67,6 +98,22 @@ parser.add_argument(
     action="store_true",
     help='Enable debug'
 )
+
+
+def validate_json(json_file, json_schema):
+    #Validate the incoming json file
+    try:
+        jsonschema.validate(
+            json_file,
+            json_schema
+        )
+    except jsonschema.ValidationError as e:
+        logger.debug("Error : {m}".format(m=e))
+        raise jsonschema.ValidationError
+    except jsonschema.SchemaError as e:
+        logger.debug("Error : {m}".format(m=e))
+        raise jsonschema.SchemaError
+
 
 
 if __name__ == "__main__":
@@ -90,10 +137,60 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
 
-    # Postgresql username
+    # assign and validate
+    ##
+
+    # Database server IP
+    db_server_ip = args.db_server_ip
+    if db_server_ip:
+        try:
+            ip_addr_validator = z3c.schema.ip.IPAddress()
+            ip_addr_validator.validate(db_server_ip)
+        except z3c.schema.ip.interfaces.NotValidIPAdress as e:
+            logger.debug(e)
+            raise z3c.schema.ip.interfaces.NotValidIPAdress(
+                "db_server_ip : {ip} is not a valid ip".format(ip=db_server_ip)
+            )
+
+    # Database config parameters
+    ##
+    config_file = args.path
     db_user = args.db_user
+    db_password = args.db_password
+
+    db_json_schema = {
+        "$schema": "http://json-schema.org/schema#",
+        "required": ["user"],
+        "additionalProperties": True,
+        "type": "object",
+        "properties": {
+            "user": {"user": "string"},
+            "password": {"password": "string"}
+        }
+    }
+
     if not db_user:
-        raise Exception("Postgresql username missing")
+        if config_file:
+            # load the psql config file
+            logger.info("loading config file from {path}".format(path=config_file))
+            config = {}
+            try:
+                with open(config_file) as json_data:
+                    config = json.load(json_data)
+                    validate_json(config, db_json_schema)
+                    db_user = config['user']
+                    if not db_password:
+                        if 'password' in config:
+                            db_password = config['password']
+
+            except IOError as e:
+                logger.debug(e)
+                raise IOError("Config file {path} not found".format(path=config_file))
+
+        else:
+            raise Exception("Postgresql username missing")
+
+
 
     # PostgresqlScriptExecutor instance
     ##
@@ -128,7 +225,7 @@ if __name__ == "__main__":
     con = None
     try:
         logger.info("connecting to postgres with user {name}".format(name=db_user))
-        con = psycopg2.connect(user=db_user)
+        con = psycopg2.connect(host=db_server_ip, user=db_user, password=db_password)
     except Exception as e:
         logger.debug(e)
         if con:
