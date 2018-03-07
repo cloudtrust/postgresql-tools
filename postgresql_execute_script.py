@@ -3,7 +3,7 @@
 
 # Copyright (C) 2018:
 #     Sonia Bogos, sonia.bogos@elca.ch
-#
+#     Chervine Majeri Kasmaei, chervine.majeri@elca.ch
 
 import sys
 import json
@@ -32,7 +32,6 @@ usage = """{pn} [options]
 
 Execute scripts and dedicated rollback scripts on postgresql
 
-    SQL scripts are stored within /scripts
     Scripts can possess an equivalent rollback script based on the file name
     script.sql          : script to execute
     script.sql.rollback : the rollback script for script.sql
@@ -130,14 +129,13 @@ if __name__ == "__main__":
 
     json_schema = {
         "$schema": "http://json-schema.org/schema#",
-        "required": [""],
-        "additionalProperties": False,
+        "additionalProperties": True,
         "type": "object",
         "properties": {
             "user": {"type": "string"},
             "password": {"type": "string"},
             "host": {"type": "string"},
-            "port": {"type": "int"},
+            "port": {"type": "integer"},
             "script": {"type": "string"},
             "rollback_script": {"type": "string"},
         }
@@ -150,14 +148,14 @@ if __name__ == "__main__":
     port = args.port
     script = args.script
     rollback_script = args.rollback_script
-    config = args.config
+    config_file = args.config
 
     ## Check against config parameters, if the variable isn't already defined
-    if config:
-        logger.info("loading config file from {path}".format(path=config))
+    if config_file:
+        logger.info("loading config file from {path}".format(path=config_file))
         config = {}
         try:
-            with open(config) as json_data:
+            with open(config_file) as json_data:
                 config = json.load(json_data)
                 validate_json(config, json_schema)
                 user = user or config.get('user')
@@ -168,7 +166,7 @@ if __name__ == "__main__":
                 rollback_script = rollback_script or config.get('rollback_script')
         except IOError as e:
             logger.debug(e)
-            raise IOError("Config file {path} not found".format(path=config))
+            raise IOError("Config file {path} not found".format(path=config_file))
 
     ## Use default arguments (where applicable). If not already defined.
     user = user or getpass.getuser()
@@ -199,7 +197,7 @@ if __name__ == "__main__":
     con = None
     try:
         logger.info("connecting to postgres with user {name}".format(name=user))
-        con = psycopg2.connect(host=host, user=user, password=password)
+        con = psycopg2.connect(host=host, user=user, password=password, port=port)
     except Exception as e:
         logger.debug(e)
         sys.exit(1)
