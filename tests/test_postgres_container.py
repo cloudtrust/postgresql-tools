@@ -7,10 +7,7 @@
 import re
 import pytest
 import logging
-#import psycopg2
 import time
-import datetime
-import calendar
 
 import dateutil.parser
 
