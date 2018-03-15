@@ -1,5 +1,5 @@
 {
-  "container_name" : "postgresql-new",
+  "container_name" : "postgresql",
   "service_name" : "postgresql",
   "psql_timeout": 75,
   "monit_timeout": 10,
