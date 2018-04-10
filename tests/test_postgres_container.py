@@ -8,6 +8,7 @@ import re
 import pytest
 import logging
 import time
+import datetime
 
 import dateutil.parser
 
@@ -183,21 +184,21 @@ class TestContainerPostgresql():
         # message in syslog when there are no errors
         no_error_status = "No entries"
 
-        # stop and restart the container
-        stop_docker = docker.bake("stop", container_name)
-        logger.debug(stop_docker)
-        stop_docker()
-
-        restart_docker = docker.bake("start", container_name)
-        logger.debug(restart_docker)
-        restart_docker()
-
-        time.sleep(3)
+        # # stop and restart the container
+        # stop_docker = docker.bake("stop", container_name)
+        # logger.debug(stop_docker)
+        # stop_docker()
+        #
+        # restart_docker = docker.bake("start", container_name)
+        # logger.debug(restart_docker)
+        # restart_docker()
 
         # docker inspect --format='{{.State.Status}} container
         check_status = docker.bake("inspect", "--format='{{.State.StartedAt}}'", container_name)
         logger.debug(check_status)
         last_started_date = dateutil.parser.parse(check_status().stdout.rstrip()).replace(tzinfo=None)
+
+        time.sleep(3)
 
         # check in journalctl if there are any errors since the container last started
         get_monit_log = docker.bake("exec", container_name, "journalctl", "-u", "monit", "--since", last_started_date,
