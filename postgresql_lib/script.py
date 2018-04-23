@@ -6,9 +6,6 @@
 #
 
 
-
-import psycopg2
-import sys
 import logging
 import collections
 
@@ -21,7 +18,6 @@ logging.basicConfig(
     datefmt='%m/%d/%Y %I:%M:%S %p'
 )
 logger = logging.getLogger("postgres_tools.postgresql_lib.script")
-logger.setLevel(logging.INFO)
 
 class PostgresqlScriptExecutor(object):
     @staticmethod
@@ -45,10 +41,10 @@ class PostgresqlScriptExecutor(object):
                         if command and not command.isspace():
                             counter += 1
                             res[counter] = {}
-                            res[counter]["command"] = "{0}".format(command)
+                            res[counter]["command"] = "{command}".format(command=command)
                             cur.execute(command)
                             logger.info(command)
-                            res[counter]["status"] = "{0}".format(cur.statusmessage)
+                            res[counter]["status"] = "{status}".format(status=cur.statusmessage)
             con.commit()
         except Exception as e:
             logger.info(e)
@@ -60,10 +56,10 @@ class PostgresqlScriptExecutor(object):
                         if command and not command.isspace():
                             counter += 1
                             res[counter] = {}
-                            res[counter]["command"] = "{0}".format(command)
+                            res[counter]["command"] = "{command}".format(command=command)
                             cur.execute(command)
                             logger.info(command)
-                            res[counter]["status"] = "{0}".format(cur.statusmessage)
+                            res[counter]["status"] = "{status}".format(status=cur.statusmessage)
 
         finally:
             return res

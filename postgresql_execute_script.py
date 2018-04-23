@@ -10,13 +10,8 @@ import json
 import logging
 import argparse
 import psycopg2
-import jsonschema
-import getpass
-
-import z3c.schema
 
 from postgresql_lib import script as pgscript
-from z3c.schema import ip
 
 # logging
 logging.basicConfig(
@@ -27,7 +22,6 @@ logging.basicConfig(
 
 version="1.0"
 prog_name = sys.argv[0]
-parser = argparse.ArgumentParser(prog="{pn} {v}".format(pn=prog_name, v=version))
 usage = """{pn} [options]
 
 Execute scripts and dedicated rollback scripts on postgresql
@@ -39,6 +33,7 @@ Execute scripts and dedicated rollback scripts on postgresql
 """.format(
     pn=prog_name
 )
+parser = argparse.ArgumentParser(prog="{pn} {v}".format(pn=prog_name, v=version), usage=usage)
 
 parser.add_argument(
     '--sql-script',
@@ -103,45 +98,19 @@ parser.add_argument(
 )
 
 
-def validate_json(json_file, json_schema):
-    #Validate the incoming json file
-    try:
-        jsonschema.validate(
-            json_file,
-            json_schema
-        )
-    except jsonschema.ValidationError as e:
-        logger.debug("Error : {m}".format(m=e))
-        raise jsonschema.ValidationError
-    except jsonschema.SchemaError as e:
-        logger.debug("Error : {m}".format(m=e))
-        raise jsonschema.SchemaError
-
-
 if __name__ == "__main__":
+
     args = parser.parse_args()
     debug = args.debug
     logger = logging.getLogger("postgres_tools.postgresql_execute_script")
     if debug:
         logger.setLevel(logging.DEBUG)
+        logging.getLogger("postgres_tools.postgresql_lib.script").setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
+        logging.getLogger("postgres_tools.postgresql_lib.script").setLevel(logging.INFO)
 
-    json_schema = {
-        "$schema": "http://json-schema.org/schema#",
-        "additionalProperties": True,
-        "type": "object",
-        "properties": {
-            "user": {"type": "string"},
-            "password": {"type": "string"},
-            "host": {"type": "string"},
-            "port": {"type": "integer"},
-            "script": {"type": "string"},
-            "rollback_script": {"type": "string"},
-        }
-    }
-
-    ## Take commandline arguments. Those have highest precedence.
+    # Take commandline arguments. Those have highest precedence.
     user = args.user
     password = args.password
     host = args.host
@@ -150,14 +119,13 @@ if __name__ == "__main__":
     rollback_script = args.rollback_script
     config_file = args.config
 
-    ## Check against config parameters, if the variable isn't already defined
+    # Check against config parameters, if the variable isn't already defined
     if config_file:
         logger.info("loading config file from {path}".format(path=config_file))
         config = {}
         try:
             with open(config_file) as json_data:
                 config = json.load(json_data)
-                validate_json(config, json_schema)
                 user = user or config.get('user')
                 password = password or config.get('password')
                 host = host or config.get('host')
@@ -168,56 +136,49 @@ if __name__ == "__main__":
             logger.debug(e)
             raise IOError("Config file {path} not found".format(path=config_file))
 
-    ## Use default arguments (where applicable). If not already defined.
-    user = user or getpass.getuser()
-
     psql_exec = pgscript.PostgresqlScriptExecutor()
 
     logger.info("loading sql file from {file}".format(file=script))
     logger.info("loading rollback sql file from {file}".format(file=rollback_script))
 
+    commands = ""
+
     try:
         with open(script, "r") as f:
             commands = f.read()
-        f.close()
+
     except Exception as e:
         logger.debug(e)
         raise Exception("Sql file {path} cannot be read".format(path=script))
 
-    rollback_commands=""
-    if rollback_script:
-        try:
-            with open(rollback_script, "r") as f:
-                rollback_commands = f.read()
-            f.close()
-        except Exception as e:
-            logger.debug(e)
-            raise Exception("Rollback sql file {path} cannot be read".format(path=rollback_script))
+    rollback_commands = ""
 
-    con = None
     try:
-        logger.info("connecting to postgres with user {name}".format(name=user))
-        con = psycopg2.connect(host=host, user=user, password=password, port=port)
+        with open(rollback_script, "r") as f:
+            rollback_commands = f.read()
+
     except Exception as e:
         logger.debug(e)
-        sys.exit(1)
+        raise Exception("Rollback sql file {path} cannot be read".format(path=rollback_script))
 
     try:
-        res = psql_exec.run(con, commands, rollback_commands)
-        logger.debug(
-            json.dumps(
-                res,
-                sort_keys=True,
-                indent=4,
-                separators=(',', ': ')
+        logger.info("Connecting to postgres with user {name}".format(name=user))
+        with psycopg2.connect(host=host, user=user, password=password, port=port) as con:
+
+            res = psql_exec.run(con, commands, rollback_commands)
+            logger.debug(
+                json.dumps(
+                    res,
+                    sort_keys=True,
+                    indent=4,
+                    separators=(',', ': ')
+                )
             )
-        )
 
     except Exception as e:
         logger.debug(e)
-        logger.info("Unexpected failure when running script. Closing connection.")
-        con.close()
-        sys.exit(1)
+        logger.info("Unexpected failure when connecting and running script. Closing connection.")
 
-    con.close()
-    logger.info("closed connection to postgresql")
+    finally:
+        con.close()
+        logger.info("Closed connection to postgresql")

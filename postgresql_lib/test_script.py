@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 # Copyright (C) 2018:
 #     Sonia Bogos, sonia.bogos@elca.ch
 #
@@ -8,7 +7,6 @@ import script
 import pytest
 import logging
 import psycopg2
-import sys
 
 # logging
 logging.basicConfig(
@@ -31,48 +29,32 @@ class TestScript():
         script_drop_user = "DROP USER test_script;"
         config = psql_settings
 
-
-        con = None
         try:
             logger.info("connecting to postgres with user {user}".format(user=config['user']))
-            con = psycopg2.connect(host=config['host_ip'], user=config['user'],
-                                   password=config['password'])
-        except Exception as e:
-            logger.debug(e)
-            if con:
-                con.rollback()
-            print("Error {error}".format(error=e))
-            sys.exit(1)
+            with psycopg2.connect(host=config['host'], user=config['user'],
+                                   password=config['password']) as con:
+                with con.cursor() as cur:
+                    # create user
+                    script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user)
 
-        script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user)
+                    cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
+                    assert cur.rowcount == 1
 
-        try:
-            cur = con.cursor()
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
-            assert cur.rowcount == 1
-        except Exception as e:
-            logger.debug(e)
-            if con:
-                con.rollback()
-            pytest.fail("Error {error}".format(error=e))
-            sys.exit(1)
+                    # drop user
+                    script.PostgresqlScriptExecutor().run(con, script_drop_user, script_create_user)
 
-        script.PostgresqlScriptExecutor().run(con, script_drop_user, script_create_user)
+                    cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
+                    assert cur.rowcount == 0
 
-
-        try:
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
-            assert cur.rowcount == 0
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
             pytest.fail("Error {error}".format(error=e))
-            sys.exit(1)
-
-        if con:
-            con.close()
-            logger.info("closed connection to postgresql")
+        finally:
+            if con:
+                con.close()
+                logger.info("closed connection to postgresql")
 
     def test_rollback(self, psql_settings):
         """Test to check that the rollback works: if an error occurs, we undo all the modifications."""
@@ -82,33 +64,24 @@ class TestScript():
         script_drop_user = "DROP USER test_script;"
         config = psql_settings
 
-        con = None
         try:
-            logger.info("connecting to postgres with user {user}".format(user=config['user']))
-            con = psycopg2.connect(host=config['host_ip'], user=config['user'],
-                                   password=config['password'])
-        except Exception as e:
-            logger.debug(e)
-            if con:
-                con.rollback()
-            print("Error {error}".format(error=e))
-            sys.exit(1)
+            logger.info("Connecting to postgres with user {user}".format(user=config['user']))
 
+            with psycopg2.connect(host=config['host'], user=config['user'], password=config['password']) as con:
+                with con.cursor() as cur:
 
-        print(script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user))
+                    print(script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user))
 
-        try:
-            cur = con.cursor()
-            cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
-            assert cur.rowcount == 0
+                    cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
+                    assert cur.rowcount == 0
+
         except Exception as e:
             logger.debug(e)
             if con:
                 con.rollback()
             pytest.fail("Error {error}".format(error=e))
-            sys.exit(1)
 
         if con:
             con.close()
-            logger.info("closed connection to postgresql")
+            logger.info("Closed connection to postgresql")
 

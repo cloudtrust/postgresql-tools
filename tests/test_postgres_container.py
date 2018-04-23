@@ -8,7 +8,7 @@ import re
 import pytest
 import logging
 import time
-import datetime
+import psycopg2
 
 import dateutil.parser
 
@@ -117,7 +117,7 @@ class TestContainerPostgresql():
         tic_tac = 0
         psql_is_up = False
 
-        while (tic_tac < max_timeout) and (psql_is_up == False):
+        while (tic_tac < max_timeout) and (not psql_is_up):
             # check if monit started postgresql
             time.sleep(1)
 
@@ -127,7 +127,7 @@ class TestContainerPostgresql():
 
             try:
                 postgresql_status = check_service().exit_code
-                if (postgresql_status == 0):
+                if postgresql_status == 0:
                     psql_is_up = True
                     logger.info("{service} is running".format(service=service_name))
 
@@ -155,7 +155,7 @@ class TestContainerPostgresql():
         tic_tac = 0
         psql_is_up = False
 
-        while (tic_tac < max_timeout) and (psql_is_up == False):
+        while (tic_tac < max_timeout) and (not psql_is_up):
             # check if monit started postgresql
             time.sleep(1)
 
@@ -165,7 +165,7 @@ class TestContainerPostgresql():
 
             try:
                 postgresql_status = check_service().exit_code
-                if (postgresql_status == 0):
+                if postgresql_status == 0:
                     psql_is_up = True
                     logger.info("{service} is running".format(service=service_name))
 
@@ -183,15 +183,6 @@ class TestContainerPostgresql():
         container_name = settings['container_name']
         # message in syslog when there are no errors
         no_error_status = "No entries"
-
-        # # stop and restart the container
-        # stop_docker = docker.bake("stop", container_name)
-        # logger.debug(stop_docker)
-        # stop_docker()
-        #
-        # restart_docker = docker.bake("start", container_name)
-        # logger.debug(restart_docker)
-        # restart_docker()
 
         # docker inspect --format='{{.State.Status}} container
         check_status = docker.bake("inspect", "--format='{{.State.StartedAt}}'", container_name)
@@ -240,7 +231,7 @@ class TestContainerPostgresql():
 
             try:
                 monit_status = check_service().exit_code
-                if (monit_status == 0):
+                if monit_status == 0:
                     monit_is_up = True
                     logger.info("{service} is running".format(service=service_name))
 
@@ -291,3 +282,88 @@ class TestContainerPostgresql():
 
         status = re.search(restart_status, monit_restart)
         assert status is not None
+
+    def test_data_consistency(self, settings, psql_settings):
+        """
+        Test to check that the modifications done in Postgresql are present after the container was stopped.
+        :param settings: settings of the container, e.g. container name, service name, etc.
+        :return:
+        """
+
+        container_name = settings['container_name']
+        service_name = settings['service_name']
+
+        try:
+            logger.info("connecting to postgres with user {user}".format(user=psql_settings['user']))
+            with psycopg2.connect(host=psql_settings['host'], user=psql_settings['user'],
+                               password=psql_settings['password']) as con:
+                with con.cursor() as cur:
+
+                    # create an user
+                    username = "test_postgresql"
+                    cur.execute("CREATE USER {user};".format(user=username))
+                    logger.debug("CREATE USER {user}".format(user=username))
+                    con.commit()
+
+        except Exception as e:
+            logger.debug(e)
+            if con:
+                con.rollback()
+            pytest.fail("Error {error}".format(error=e))
+
+        finally:
+            if con:
+                con.close()
+                logger.info("closed connection to postgresql")
+
+        stop_container = docker.bake("stop", container_name)
+        logger.debug(stop_container)
+        stop_container()
+
+        restart_container = docker.bake("restart", container_name)
+        logger.debug(restart_container)
+        restart_container()
+
+        psql_is_up = False
+
+        while not psql_is_up:
+            time.sleep(1)
+            check_service = docker.bake("exec", "-i", container_name, "systemctl", "status", service_name)
+            logger.debug(check_service)
+
+            try:
+                postgresql_status = check_service().exit_code
+                if postgresql_status == 0:
+                    psql_is_up = True
+                    logger.info("{service} is running".format(service=service_name))
+            except Exception as e:
+                pass
+
+        try:
+            logger.info("connecting again to postgres with user {user}".format(user=psql_settings['user']))
+            with psycopg2.connect(host=psql_settings['host'], user=psql_settings['user'],
+                                  password=psql_settings['password']) as con:
+                with con.cursor() as cur:
+
+                    # check if the user created exists
+                    logger.debug("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
+                    cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
+                    assert cur.rowcount == 1
+
+                    # remove the created user
+                    cur.execute("DROP USER {user};".format(user=username))
+                    logger.debug("DROP USER {user};".format(user=username))
+                    cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=username))
+                    assert cur.rowcount == 0
+
+                    con.commit()
+        except Exception as e:
+            logger.debug(e)
+            if con:
+                con.rollback()
+            pytest.fail("Error {error}".format(error=e))
+
+        finally:
+            if con:
+                con.close()
+                logger.info("closed connection to postgresql")

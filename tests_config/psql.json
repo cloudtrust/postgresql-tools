@@ -2,7 +2,7 @@
   "_comment" : "Please replace the config values with appropriate values",
   "user": "postgres",
   "password": "Passw0rd",
-  "host_ip": "127.0.0.1",
+  "host": "127.0.0.1",
   "script": "scripts/test.sql",
   "rollback_script": "scripts/test.sql.rollback",
   "port": 5432
