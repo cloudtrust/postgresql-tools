@@ -3,6 +3,16 @@
 #     Sonia Bogos, sonia.bogos@elca.ch
 #
 
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#
+
 import script
 import pytest
 import logging
@@ -16,6 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("postgres_tools.postgresql_lib.test_script")
 logger.setLevel(logging.INFO)
+
 
 @pytest.mark.usefixtures('psql_settings', scope='class')
 class TestScript():
@@ -35,13 +46,13 @@ class TestScript():
                                    password=config['password']) as con:
                 with con.cursor() as cur:
                     # create user
-                    script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user)
+                    script.PostgresqlScriptExecutor().run(con, script_create_user)
 
                     cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
                     assert cur.rowcount == 1
 
                     # drop user
-                    script.PostgresqlScriptExecutor().run(con, script_drop_user, script_create_user)
+                    script.PostgresqlScriptExecutor().run(con, script_drop_user)
 
                     cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
                     assert cur.rowcount == 0
@@ -69,8 +80,11 @@ class TestScript():
 
             with psycopg2.connect(host=config['host'], user=config['user'], password=config['password']) as con:
                 with con.cursor() as cur:
-
-                    print(script.PostgresqlScriptExecutor().run(con, script_create_user, script_drop_user))
+                    try:
+                        print(script.PostgresqlScriptExecutor().run(con, script_create_user))
+                    except Exception as e:
+                        logger.info(e)
+                        script.PostgresqlScriptExecutor().run(con, script_drop_user)
 
                     cur.execute("SELECT 1 FROM pg_roles WHERE rolname='{user}'".format(user=user))
                     assert cur.rowcount == 0

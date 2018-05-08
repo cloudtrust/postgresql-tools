@@ -5,6 +5,14 @@
 #     Sonia Bogos, sonia.bogos@elca.ch
 #
 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#
 
 import logging
 import collections
@@ -21,7 +29,7 @@ logger = logging.getLogger("postgres_tools.postgresql_lib.script")
 
 class PostgresqlScriptExecutor(object):
     @staticmethod
-    def run(con, script, rollback_script):
+    def run(con, script):
         """
 
         :param con: connection to postgresql
@@ -47,22 +55,7 @@ class PostgresqlScriptExecutor(object):
                             res[counter]["status"] = "{status}".format(status=cur.statusmessage)
             con.commit()
         except Exception as e:
-            logger.info(e)
-            if con:
-                # execute the rollback script
-                with con.cursor() as cur:
-                    list_commands = rollback_script.split(";\n")
-                    for command in list_commands:
-                        if command and not command.isspace():
-                            counter += 1
-                            res[counter] = {}
-                            res[counter]["command"] = "{command}".format(command=command)
-                            cur.execute(command)
-                            logger.info(command)
-                            res[counter]["status"] = "{status}".format(status=cur.statusmessage)
+            raise Exception("Unexpected failure when executing the script: {e}".format(e=e))
 
-        finally:
-            return res
-
-
+        return res
 

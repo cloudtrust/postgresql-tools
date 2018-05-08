@@ -5,6 +5,15 @@
 #     Sonia Bogos, sonia.bogos@elca.ch
 #     Chervine Majeri Kasmaei, chervine.majeri@elca.ch
 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+#
+
 import sys
 import json
 import logging
@@ -25,11 +34,6 @@ prog_name = sys.argv[0]
 usage = """{pn} [options]
 
 Execute scripts and dedicated rollback scripts on postgresql
-
-    Scripts can possess an equivalent rollback script based on the file name
-    script.sql          : script to execute
-    script.sql.rollback : the rollback script for script.sql
-
 """.format(
     pn=prog_name
 )
@@ -121,7 +125,7 @@ if __name__ == "__main__":
 
     # Check against config parameters, if the variable isn't already defined
     if config_file:
-        logger.info("loading config file from {path}".format(path=config_file))
+        logger.info("loading conf--ig file from {path}".format(path=config_file))
         config = {}
         try:
             with open(config_file) as json_data:
@@ -135,8 +139,6 @@ if __name__ == "__main__":
         except IOError as e:
             logger.debug(e)
             raise IOError("Config file {path} not found".format(path=config_file))
-
-    psql_exec = pgscript.PostgresqlScriptExecutor()
 
     logger.info("loading sql file from {file}".format(file=script))
     logger.info("loading rollback sql file from {file}".format(file=rollback_script))
@@ -165,15 +167,23 @@ if __name__ == "__main__":
         logger.info("Connecting to postgres with user {name}".format(name=user))
         with psycopg2.connect(host=host, user=user, password=password, port=port) as con:
 
-            res = psql_exec.run(con, commands, rollback_commands)
-            logger.debug(
-                json.dumps(
-                    res,
-                    sort_keys=True,
-                    indent=4,
-                    separators=(',', ': ')
+            try:
+                res = pgscript.PostgresqlScriptExecutor.run(con, commands)
+                logger.debug(
+                    json.dumps(
+                        res,
+                        sort_keys=True,
+                        indent=4,
+                        separators=(',', ': ')
+                    )
                 )
-            )
+            except Exception as e:
+                logger.debug(e)
+                try:
+                    res = pgscript.PostgresqlScriptExecutor.run(con, rollback_commands)
+                except Exception as e:
+                    logger.debug(e)
+                    sys.exit(2)
 
     except Exception as e:
         logger.debug(e)
