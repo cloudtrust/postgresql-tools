@@ -184,11 +184,10 @@ if __name__ == "__main__":
                 except Exception as e:
                     logger.debug(e)
                     sys.exit(2)
+        if con:
+            con.close()
+            logger.info("Closed connection to postgresql")
 
     except Exception as e:
         logger.debug(e)
         logger.info("Unexpected failure when connecting and running script. Closing connection.")
-
-    finally:
-        con.close()
-        logger.info("Closed connection to postgresql")
